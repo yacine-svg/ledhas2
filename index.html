@@ -656,7 +656,7 @@ input[aria-invalid="true"]{border-color:var(--saff)!important}
   function buildMessage(){
     var sep = d("sep"), l = [d("book")];
     function add(k, v){ if(v !== "" && v != null) l.push(d(k) + sep + v); }
-    if(CAN_SAVE) add("l_ref", REF);
+    if(CAN_SAVE || DEMO_SITE) add("l_ref", REF);
     add("l_name", f("f-nom").value.trim());
     add("l_tel", f("f-tel").value.trim());
     add("l_mail", f("f-email").value.trim());
@@ -685,6 +685,7 @@ input[aria-invalid="true"]{border-color:var(--saff)!important}
   /* ---------- Enregistrement de la demande (Supabase, voir config.js) ---------- */
   var CFGX = window.LEDHAS_CONFIG || {}, SB = String(CFGX.supabaseUrl || "").replace(/\/+$/, ""), SBK = String(CFGX.supabaseAnonKey || "");
   var CAN_SAVE = /^https:\/\/./.test(SB) && SBK.length > 20;
+  var DEMO_SITE = !CAN_SAVE && CFGX.demo === true; // démo : la demande va dans ce navigateur, visible dans /admin/
   var doneEl = f("formDone"), savedSig = null, savedRef = null, saving = false;
   function newRef(){
     var A = "23456789ABCDEFGHJKMNPQRSTUVWXYZ", out = "LDH-", buf = new Uint8Array(6), i;
@@ -711,6 +712,10 @@ input[aria-invalid="true"]{border-color:var(--saff)!important}
   function showSaved(){ if(savedRef){ doneEl.textContent = d("saved").replace("{ref}", savedRef); doneEl.hidden = false; } }
   onLang.push(showSaved);
   function saveRequest(p, sig){
+    if(DEMO_SITE){
+      try{ var box = JSON.parse(localStorage.getItem("ledhas-demo-inbox") || "[]"); p.ref = REF; p.at = new Date().toISOString(); box.push(p); localStorage.setItem("ledhas-demo-inbox", JSON.stringify(box)); savedSig = sig; savedRef = REF; showSaved(); }catch(e){}
+      return;
+    }
     if(!CAN_SAVE || saving) return;
     saving = true;
     p.ref = REF;
